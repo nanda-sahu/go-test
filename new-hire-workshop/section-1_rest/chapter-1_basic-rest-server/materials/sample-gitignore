@@ -1,0 +1,30 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Build outputs
+/dist
+/.built
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# Goland IDE
+.idea
+
+# VSCode
+.vscode
+
+# coverage files
+*.cov
+*coverage.html
+*test-output.txt
+
+# macOS files
+.DS_Store

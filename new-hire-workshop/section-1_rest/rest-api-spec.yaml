@@ -1,0 +1,234 @@
+openapi: 3.0.3
+info:
+  title: Onboarding Project Orders REST API
+  description: API to place and get orders
+  version: 0.1.0
+
+tags:
+  - name: orders
+    description: Onboarding Project Orders API
+servers:
+  - url: /
+paths:
+
+  /api/v1/orders:
+    get:
+      summary: List a user's orders
+      description: Returns a list of the summaries of orders that have been placed by the user.
+      operationId: ListOrders
+      tags:
+        - orders
+      parameters:
+        - in: query
+          name: userid
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: |
+            The id of the user making the request. NOTE: This would normally come from the user's 
+						token, however, for simplicitly of the exercise we accept it as a query parameter
+          example: 64367ef5-2dbf-4b1e-8fe9-2b27ff8f08ea
+      responses:
+        '200':
+          description: List of user orders
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderSummaryList'
+        '400':
+          description: An invalid request was received.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: An internal error occurred.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Service unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      summary: Place a new order
+      description: Place a new order for the user
+      operationId: PlaceOrder
+      tags:
+        - orders
+      parameters:
+        - in: query
+          name: userid
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: |
+            The id of the user making the request. NOTE: This would normally come from the user's 
+						token, however, for simplicitly of the exercise we accept it as a query parameter
+          example: 64367ef5-2dbf-4b1e-8fe9-2b27ff8f08ea
+      responses:
+        '200':
+          description: The order placed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderSummary'
+        '400':
+          description: An invalid request was received.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: An internal error occurred.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Service unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/orders/{orderid}:
+    get:
+      summary: Returns details of a specific order
+      description: Returns the details of the order specified by the order ID.
+      operationId: GetOrder
+      tags:
+        - orders
+      parameters:
+        - in: path
+          name: orderid
+          required: true
+          description: The UUID of the order
+          schema:
+            type: string
+            format: uuid
+          example: c1a0eb78-41a0-4151-93b2-f057ffeca3f3
+        - in: query
+          name: userid
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: |
+            The id of the user making the request. NOTE: This would normally come from the user's 
+						token, however, for simplicitly of the exercise we accept it as a query parameter
+          example: 64367ef5-2dbf-4b1e-8fe9-2b27ff8f08ea
+      responses:
+        '200':
+          description: Order details including delivery status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '400':
+          description: An invalid request was received.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: An order with the provided ID was not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: An internal error occurred.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Service unavailable.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+                
+components:
+  schemas:
+  
+    OrderStatus:
+      type: string
+      enum: ['Placed', 'In transit', 'Delivered']
+      description: Summary of the current status of the order
+            
+    OrderSummary:
+      properties:
+        orderId:
+          type: string
+          format: uuid
+          description: The ID of the order
+        customerId:
+          type: string
+          format: uuid
+          description: The ID of the customer that placed the order
+        productId:
+          type: string
+          format: uuid
+          description: The ID of the product that has been ordered
+        status:
+          $ref: '#/components/schemas/OrderStatus'
+            
+    OrderSummaryList:
+      properties:
+        orderSummaries:
+          items:
+            items:
+              $ref: '#/components/schemas/OrderSummary'
+          description: Array of the order summaries
+      
+    Order:
+      # This allOf statement indicates that the Order model contains all the
+      # fields specified on the OrderSummary model as well as the ones defined
+      # below explicitly
+      allOf:
+        - $ref: '#/components/schemas/OrderSummary'
+      properties:
+        paymentId:
+          type: string
+          format: uuid
+          description: The ID of the transaction that paid for the order
+        address:
+          type: string
+          description: The delivery address for the order
+        deliveryEntries:
+          items:
+            $ref: '#/components/schemas/DeliveryEntry'
+          type: array
+          description: A list of the delivery events that have occured so far for the order
+        orderedAt:
+          type: string
+          format: date-time
+          description: When the order was placed
+        deliveredAt:
+          type: string
+          nullable: true
+          format: date-time
+          description: When the order was delivered to the delivery address
+            
+    DeliveryEntry:
+      properties:
+        message:
+          type: string
+          description: Description of event
+        timestamp:
+          type: string
+          format: date-time
+          description: When the event occurred
+            
+    Error:
+      properties:
+        message:
+          type: string
+          description: The error message
